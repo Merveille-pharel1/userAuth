@@ -1,0 +1,125 @@
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body{
+    font-size: x-large;
+    height: 100vh;
+}
+
+header{
+    height: 5rem;
+    background-color: rgb(200, 200, 200);
+    padding: 1.5rem 1rem;
+    display: flex;
+    justify-content: space-between;
+}
+
+header p{
+    color: chocolate;
+}
+
+header p:hover{
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+#second-section{
+    display: flex;
+    justify-content: center; 
+    height: calc(100vh - 10rem); 
+}
+
+form{
+    width: 500px;
+    height: 360px;
+    margin-top: 5rem;
+    border: 1px solid black;
+    border-radius: 10px;
+    padding: 1rem;
+    box-shadow: #8D6F64 2px 5px;
+}
+
+form div{
+    margin-bottom: 1rem;
+}
+
+form h3{
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.field{
+    display: block;
+}
+
+input{
+    width: 70%;
+    height: 2rem;
+    border-radius: 5px;
+    font-size: 1.2rem;
+    padding: 1rem;
+}
+
+button{
+    padding: 8px 14px;
+    width: 100px;
+    border-radius: 6px;
+    background: linear-gradient(180deg, #7fffd4 0%, #66e0c6 100%);
+    border: none;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden; /* pour l'effet shine */
+    color: #04323b;
+    font-weight: 600;
+    transition: transform 250ms cubic-bezier(.2,.9,.3,1), box-shadow 250ms ease, background 250ms ease;
+    box-shadow: 0 4px 10px rgba(6, 37, 36, 0.12);
+}
+
+/* Hover / focus / active states with an animated "shine" pseudo-element */
+button::after{
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -70%;
+    width: 40%;
+    height: 100%;
+    background: rgba(255,255,255,0.25);
+    transform: skewX(-25deg);
+    transition: left 520ms cubic-bezier(.2,.9,.3,1);
+    pointer-events: none;
+}
+
+button:hover, button:focus{
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 10px 26px rgba(6, 37, 36, 0.18);
+    outline: none;
+}
+
+button:hover::after, button:focus::after{
+    left: 130%;
+}
+
+button:active{
+    transform: translateY(0) scale(0.98);
+    box-shadow: 0 6px 18px rgba(6, 37, 36, 0.16);
+}
+
+/* Respect user preference for reduced motion */
+@media (prefers-reduced-motion: reduce){
+    button, button::after{
+        transition: none !important;
+    }
+}
+
+.d-none{
+    display: none;
+}
+
+footer{
+    height: 5rem;
+    background-color: rgb(200, 200, 200);
+    padding: 1.5rem 1rem;
+}
