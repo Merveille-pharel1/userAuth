@@ -1,6 +1,7 @@
 [
   {
     "name": "Pharel",
-    "password": "Teclaire"
+    "password_digest": "$2a$12$w5lG2Yb2p9CXWIBwbElQ5eITfh8gVc4KtRP3w7KWx4xff/3Ojr.kS",
+    "id": "1ce57e6c-44c0-48d5-948f-cf05db4f698f"
   }
 ]
