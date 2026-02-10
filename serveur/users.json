@@ -2,6 +2,25 @@
   {
     "name": "Pharel",
     "password_digest": "$2a$12$w5lG2Yb2p9CXWIBwbElQ5eITfh8gVc4KtRP3w7KWx4xff/3Ojr.kS",
-    "id": "1ce57e6c-44c0-48d5-948f-cf05db4f698f"
+    "id": "1ce57e6c-44c0-48d5-948f-cf05db4f698f",
+    "created_at": "2026-02-10T05:33:40Z"
+  },
+  {
+    "id": "340465d0-4da6-4bea-8e56-a0a6a57812c6",
+    "name": "Perez",
+    "password_digest": "$2a$12$kyVrs1/wQ/Nxe/D6RGO3oe8AVsTOGPPAJX4ovgUWoSsNUcxyYvFSe",
+    "created_at": "2026-02-10T06:07:19Z"
+  },
+  {
+    "id": "4f0dd134-c1f9-49f9-84b8-eed6ec7acd85",
+    "name": "Audry",
+    "password_digest": "$2a$12$LhEpiBC3TVW1E9I8ioicTeej1cjOMvstcqlwvRppMNYyBcL9dThZK",
+    "created_at": "2026-02-10T06:09:56Z"
+  },
+  {
+    "name": "admin",
+    "password_digest": "$2a$12$eLMwhdfazHZEAZ7h6SqL..zkKv1V7yEQQWD45K4/bkKDzL5zeRb7i",
+    "id": "e709af6e-9958-4c7d-9a41-e7395df0d0f5",
+    "created_at": "2026-02-10T06:13:12Z"
   }
 ]

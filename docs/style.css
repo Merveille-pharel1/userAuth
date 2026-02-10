@@ -123,3 +123,64 @@ footer{
     background-color: rgb(200, 200, 200);
     padding: 1.5rem 1rem;
 }
+
+/* Dashboard specific styles (previously inline in dashboard.html) */
+main{
+    font-family: Arial, Helvetica, sans-serif;
+    max-width: 720px;
+    margin: 2rem auto;
+}
+
+#dashboard{
+    border: 1px solid #ddd;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+}
+
+#dashboard h1{
+    margin: 0 0 0.5rem 0;
+    font-size: 1.4rem;
+    color: #0b525b;
+}
+
+#dashboard p.lead{
+    color: #6b7a7a;
+    margin-top: 0;
+}
+
+#member-card{
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.avatar{
+    width: 64px;
+    height: 64px;
+    background: #e6f6f0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #026759;
+    font-size: 1.1rem;
+}
+
+#member-card .name{
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+#member-card .since{
+    color: #718a89;
+    font-size: 0.95rem;
+}
+
+.dashboard-note{
+    margin-top: 1.5rem;
+    color: #4b6362;
+    font-size: 0.95rem;
+}

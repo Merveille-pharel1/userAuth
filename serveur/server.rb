@@ -17,6 +17,7 @@ require "sinatra/reloader"
 require "json"
 require "securerandom"
 require "bcrypt"
+require "digest"
 
 class MySinatraApp < Sinatra::Base
 
@@ -27,7 +28,9 @@ class MySinatraApp < Sinatra::Base
     # Sessions (cookie) - première étape vers l'authentification par session
     configure do
         enable :sessions
-        set :session_secret, ENV.fetch('SESSION_SECRET') { SecureRandom.hex(64) }
+    set :session_secret, ENV.fetch('SESSION_SECRET') { SecureRandom.hex(64) }
+    # Fingerprint du secret pour aider au debug (ne loggez pas le secret en clair)
+    warn "SESSION_SECRET fp: #{Digest::SHA256.hexdigest(settings.session_secret)[0,8]}"
         # Options du cookie de session. En production, mettez `secure: true`.
         session_secure = settings.environment == :production
         use Rack::Session::Cookie, key: 'auth.session', path: '/',
@@ -87,6 +90,11 @@ class MySinatraApp < Sinatra::Base
         data.map! do |u|
             unless u.key?("id")
                 u["id"] = SecureRandom.uuid
+                changed = true
+            end
+            # ensure older records have a created_at timestamp
+            unless u.key?("created_at")
+                u["created_at"] = Time.now.utc.iso8601
                 changed = true
             end
             u
@@ -164,6 +172,10 @@ class MySinatraApp < Sinatra::Base
       send_file File.expand_path("../docs/index.html", __dir__)
     end  
 
+    get "/dashboard" do
+      send_file File.expand_path("../docs/dashboard.html", __dir__)
+    end  
+
     post "/new-user" do 
         # Attendu: body JSON { name: "...", password: "..." }
         payload = begin
@@ -202,11 +214,25 @@ class MySinatraApp < Sinatra::Base
         # Ajouter et sauvegarder (stocker password_digest via BCrypt)
             begin
                 digest = BCrypt::Password.create(pwd)
-                entry = { "id" => SecureRandom.uuid, "name" => user_name, "password_digest" => digest }
+                entry = { "id" => SecureRandom.uuid, "name" => user_name, "password_digest" => digest, "created_at" => Time.now.utc.iso8601 }
                 data << entry
                 File.write(USER_FILE, JSON.pretty_generate(data))
-                status 201
-                return ""
+
+                env['rack.session.options'][:renew] = true rescue nil
+                session.clear rescue nil
+                session[:user_id] = entry["id"]
+
+                # If client is an API (JSON), respond with JSON + created status so fetch clients
+                # can consume the Set-Cookie and act accordingly. For HTML form submissions
+                # we still redirect to the dashboard.
+                if request.media_type == 'application/json'
+                    content_type :json
+                    status 201
+                    return({ ok: true, redirect: '/dashboard' }.to_json)
+                else
+                    redirect "/dashboard", 303
+                end
+                
             rescue => e
                 warn "bcrypt create error (new-user): ", e.message
                 status 500
@@ -240,25 +266,58 @@ class MySinatraApp < Sinatra::Base
         end
 
         status_code, message = authenticate_and_login(user_name, pwd)
-        status status_code
-        return message
+
+        if status_code == 200
+            # If this is an API (JSON) request, respond with JSON instead of redirecting
+            if request.media_type == 'application/json'
+                content_type :json
+                status 200
+                return({ ok: true, redirect: '/dashboard' }.to_json)
+            else
+                redirect "/dashboard", 303
+            end
+        else
+            status status_code
+            return message
+        end
     end
 
     # Retourne les infos de l'utilisateur courant (sans champs sensibles)
     get "/me" do
         if logged_in?
             content_type :json
-            { id: current_user["id"], name: current_user["name"] }.to_json
+            { id: current_user["id"], name: current_user["name"], created_at: current_user["created_at"] }.to_json
         else
             status 401
             ""
         end
     end
 
+    get "/users" do
+        if logged_in? && current_user["name"] == "admin"
+            content_type :json
+            get_users.to_json
+        else
+            status 403
+            "Autorisation refusée: accès réservé à l'administrateur"
+        end
+    end
+     
+
     post "/logout" do
+        # Clear server-side session then respond appropriately depending on client
         session.clear
-        status 204
-        ""
+
+        # If the client is an API (JSON), return a small JSON payload so fetch clients
+        # can consume the Set-Cookie and perform a client-side navigation.
+        if request.media_type == 'application/json'
+            content_type :json
+            status 200
+            return({ ok: true, redirect: '/' }.to_json)
+        else
+            # For normal browser form flow, perform an HTTP redirect back to index
+            redirect '/', 303
+        end
     end
 
     run! if app_file == $0
