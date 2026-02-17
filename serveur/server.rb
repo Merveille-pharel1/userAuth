@@ -1,19 +1,9 @@
-require "bundler/inline"
-
-gemfile do
-    source "http://rubygems.org"
-
-    gem "sinatra-contrib"
-    # -contrib contient plusieurs extensions pratiques
-    # https://sinatrarb.com/contrib/
-
-    gem "rackup"
-    gem "puma"
-    gem "bcrypt"
-end
+require "bundler/setup"
+Bundler.require
 
 require "sinatra/base"
 require "sinatra/reloader"
+require "fileutils"
 require "json"
 require "securerandom"
 require "bcrypt"
@@ -24,6 +14,9 @@ class MySinatraApp < Sinatra::Base
     configure :development do
         register Sinatra::Reloader
     end
+
+    set :bind, '0.0.0.0'
+    set :port, ENV.fetch('PORT', 4567)
 
     # Sessions (cookie) - première étape vers l'authentification par session
     configure do
@@ -44,8 +37,10 @@ class MySinatraApp < Sinatra::Base
 
     set :public_folder, File.expand_path("../docs", __dir__)
 
-    # Utiliser un chemin absolu basé sur le répertoire où se trouve ce fichier
-    USER_FILE = File.expand_path("users.json", __dir__)
+    # Utiliser un chemin de données configurable (ex: disque persistant Render)
+    data_dir = ENV.fetch('USER_DATA_DIR', __dir__)
+    FileUtils.mkdir_p(data_dir) unless Dir.exist?(data_dir)
+    USER_FILE = File.expand_path("users.json", data_dir)
     File.write(USER_FILE, "[]") unless File.exist?(USER_FILE)
 
     # Migration automatique: convertir les mots de passe en clair existants
@@ -75,7 +70,7 @@ class MySinatraApp < Sinatra::Base
         end
     end
 
-    # (Migrations will be lancées après la définition de get_users)
+    # (les migrations vont être lancées après la définition de get_users)
 
     def get_users()
         return JSON.parse(File.read(USER_FILE)) 
@@ -84,7 +79,7 @@ class MySinatraApp < Sinatra::Base
     # Migration automatique: ajouter un id (UUID) aux utilisateurs existants
     # si ils n'en ont pas encore, puis persister le fichier.
     def self.migrate_user_ids!
-        data = JSON.parse(File.read(USER_FILE)) rescue []
+        data = get_users rescue []
         changed = false
 
         data.map! do |u|
@@ -92,7 +87,7 @@ class MySinatraApp < Sinatra::Base
                 u["id"] = SecureRandom.uuid
                 changed = true
             end
-            # ensure older records have a created_at timestamp
+           
             unless u.key?("created_at")
                 u["created_at"] = Time.now.utc.iso8601
                 changed = true
@@ -123,8 +118,7 @@ class MySinatraApp < Sinatra::Base
         end
     end
 
-    # Authenticate credentials and, on success, set session[:user_id].
-    # Returns [status, message] where status is 200 on success or HTTP code on failure.
+    
     def authenticate_and_login(user_name, pwd)
         data = get_users rescue []
         user = data.find { |u| u["name"] == user_name }
@@ -222,9 +216,7 @@ class MySinatraApp < Sinatra::Base
                 session.clear rescue nil
                 session[:user_id] = entry["id"]
 
-                # If client is an API (JSON), respond with JSON + created status so fetch clients
-                # can consume the Set-Cookie and act accordingly. For HTML form submissions
-                # we still redirect to the dashboard.
+                
                 if request.media_type == 'application/json'
                     content_type :json
                     status 201
@@ -268,7 +260,7 @@ class MySinatraApp < Sinatra::Base
         status_code, message = authenticate_and_login(user_name, pwd)
 
         if status_code == 200
-            # If this is an API (JSON) request, respond with JSON instead of redirecting
+            
             if request.media_type == 'application/json'
                 content_type :json
                 status 200
@@ -305,17 +297,15 @@ class MySinatraApp < Sinatra::Base
      
 
     post "/logout" do
-        # Clear server-side session then respond appropriately depending on client
         session.clear
 
-        # If the client is an API (JSON), return a small JSON payload so fetch clients
-        # can consume the Set-Cookie and perform a client-side navigation.
+        
         if request.media_type == 'application/json'
             content_type :json
             status 200
             return({ ok: true, redirect: '/' }.to_json)
         else
-            # For normal browser form flow, perform an HTTP redirect back to index
+            
             redirect '/', 303
         end
     end
